@@ -15,7 +15,7 @@
 ### 📺 视频教程
 
 如果你是第一次使用油猴脚本，可以查看详细的视频演示：
-👉 [点击查看教程视频](https://www.google.com/search?q=%E4%B8%80%E4%B8%AA%E7%A4%BA%E4%BE%8B%E9%93%BE%E6%8E%A5)
+👉 [点击查看教程视频](youtube.com/watch?v=KizSavmwwYY)
 
 ---
 

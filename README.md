@@ -36,6 +36,7 @@
 
 4. **模式切换**：
 * 页面侧边会出现一个**悬浮控制窗**。
+  ![悬浮窗示例](https://raw.githubusercontent.com/Bob8259/Gemini-/main/ScreenShot_2026-02-01_090131_012.png)
 * 点击你需要的模式，插件将立即生效并在下次访问时自动应用。
 
 

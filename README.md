@@ -46,10 +46,10 @@
 
 ```
 // ==UserScript==
-// @name         Gemini 模式自动切换器
+// @name         Gemini 模式自动切换器 (适配新版UI)
 // @namespace    http://tampermonkey.net/
-// @version      1.0
-// @description  修复误点击自身UI的问题，完美自动切换
+// @version      1.1
+// @description  修复误点击自身UI的问题，完美自动切换，适配带描述的新版下拉菜单
 // @author       Azikaban/Bob
 // @match        https://gemini.google.com/*
 // @grant        GM_setValue
@@ -104,6 +104,7 @@
         const modes = [
             { id: 'Thinking', label: 'Thinking' },
             { id: 'Pro', label: 'Pro' },
+            { id: 'Fast', label: 'Fast' }, // 添加了Fast模式以防万一
             { id: 'OFF', label: '🔴关闭自动' }
         ];
 
@@ -134,24 +135,27 @@
         (document.body || document.documentElement).appendChild(container);
     };
 
-    // --- 4. 核心查找函数 (关键修复点) ---
-    const findElementByText = (text, selector = 'span, div, button, li') => {
-        const elements = document.querySelectorAll(selector);
-        return Array.from(elements).find(el => {
-            // 排除掉我们自己的 UI 面板 (#gemini-selector-ui) 里的元素
-            if (el.closest('#gemini-selector-ui')) return false;
+    // --- 4. 核心查找函数 (全新修复点：使用 data-test-id 替代文本模糊匹配) ---
+    const findTargetOptionButton = (mode) => {
+        // 映射 UI 上的 targetMode 到实际的 data-test-id
+        const modeMap = {
+            'Thinking': 'bard-mode-option-thinking',
+            'Pro': 'bard-mode-option-pro',
+            'Fast': 'bard-mode-option-fast'
+        };
 
-            const content = el.textContent.trim();
-            // 宽松匹配：内容完全相等，或者包含且长度适中
-            return content === text || (content.includes(text) && content.length < 35);
-        });
+        const testId = modeMap[mode];
+        if (!testId) return null;
+
+        // 直接精准查询整个 button 元素
+        return document.querySelector(`button[data-test-id="${testId}"]`);
     };
 
     // --- 5. 核心执行逻辑 ---
     const performCheckAndSwitch = () => {
         if (isSwitching || targetMode === 'OFF') return;
 
-        // A. 定位当前模式按钮 (Angular 属性检测)
+        // A. 定位当前模式按钮 (如果这里也失效了，可以后续继续优化)
         const allSpans = document.querySelectorAll('span');
         let currentModeSpan = null;
 
@@ -159,7 +163,7 @@
             const hasNgAttr = Array.from(span.attributes).some(attr => attr.name.startsWith('_ngcontent-ng'));
             const text = span.textContent.trim();
 
-            if (hasNgAttr && text.length< 10 && (text.includes('Flash') || text.includes('Fast') || text.includes('Thinking') || text.includes('Pro'))) {
+            if (hasNgAttr && text.length < 10 && (text.includes('Flash') || text.includes('Fast') || text.includes('Thinking') || text.includes('Pro'))) {
                 currentModeSpan = span;
                 break;
             }
@@ -178,15 +182,15 @@
             const trigger = currentModeSpan.closest('button') || currentModeSpan.parentElement;
             trigger.click();
 
-            // C. 查找并点击目标
+            // C. 查找并点击目标菜单项
             setTimeout(() => {
-                const targetOption = findElementByText(targetMode);
+                const targetOption = findTargetOptionButton(targetMode);
 
                 if (targetOption) {
-                    console.log(`[Gemini] 找到目标选项 [${targetMode}]，点击！`);
+                    console.log(`[Gemini] 精准定位到目标选项 [${targetMode}] 按钮，点击！`);
                     targetOption.click();
                 } else {
-                    console.warn(`[Gemini] 未找到目标，可能是菜单未弹出或文字不匹配`);
+                    console.warn(`[Gemini] 未找到目标，可能是菜单渲染延迟`);
                 }
 
                 // 冷却结束
@@ -203,5 +207,4 @@
     setInterval(performCheckAndSwitch, 1000);
 
 })();
-
 ```
